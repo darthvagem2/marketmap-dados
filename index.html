@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="MarketMap Dados — análise gratuita de presença digital de negócios locais com dados públicos." />
+  <title>MarketMap Dados</title>
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ3yn2tuTwE54TMQ1kqkzH8pL0jF7uQ="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="MarketMap Dados">
+      <span class="brand-mark">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 5C20.4 5 11 14.4 11 26c0 16.3 21 33 21 33s21-16.7 21-33C53 14.4 43.6 5 32 5Z"/>
+          <circle cx="32" cy="26" r="7.2"/>
+        </svg>
+      </span>
+      <span>
+        <strong>MarketMap</strong>
+        <small>Dados</small>
+      </span>
+    </a>
+
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" type="button" title="Alternar tema" aria-label="Alternar tema">
+        <span id="themeIcon">☾</span>
+      </button>
+      <button class="primary compact" id="openSearchBtn" type="button">
+        <span>＋</span>
+        Nova análise
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero reveal">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse-dot"></span> Inteligência local com dados públicos</div>
+        <h1>Descubra onde o marketing local está <em>ficando para trás.</em></h1>
+        <p>
+          Pesquise qualquer região, encontre negócios reais e compare presença digital,
+          site, redes, dados públicos e oportunidades de melhoria — sem API paga.
+        </p>
+
+        <form id="searchForm" class="search-card">
+          <div class="search-grid">
+            <label>
+              <span>País</span>
+              <input id="country" autocomplete="country-name" value="Brasil" placeholder="Ex.: Brasil" />
+            </label>
+
+            <label>
+              <span>Cidade</span>
+              <input id="city" autocomplete="address-level2" value="São Paulo" placeholder="Ex.: São Paulo" />
+            </label>
+
+            <label>
+              <span>Bairro / região</span>
+              <input id="neighborhood" autocomplete="address-level3" value="Capão Redondo" placeholder="Ex.: Capão Redondo" />
+            </label>
+
+            <label>
+              <span>Categoria</span>
+              <select id="category">
+                <option value="all">Todas</option>
+                <option value="food">Alimentação</option>
+                <option value="retail">Varejo</option>
+                <option value="beauty">Beleza</option>
+                <option value="health">Saúde</option>
+                <option value="education">Educação</option>
+                <option value="services">Serviços</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="search-footer">
+            <div class="range-wrap">
+              <div>
+                <strong>Raio</strong>
+                <small id="radiusLabel">2,2 km</small>
+              </div>
+              <input id="radius" type="range" min="500" max="5000" step="100" value="2200" />
+            </div>
+
+            <button class="primary search-btn" type="submit" id="searchBtn">
+              <span class="btn-label">Pesquisar negócios</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+
+        <div class="hero-meta">
+          <span>✓ Sem login</span>
+          <span>✓ Sem cartão</span>
+          <span>✓ Sem chave obrigatória</span>
+          <span>✓ Exportação CSV</span>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orb">
+          <div class="orb-ring ring-1"></div>
+          <div class="orb-ring ring-2"></div>
+          <div class="orb-ring ring-3"></div>
+          <div class="orb-core">
+            <span>MM</span>
+            <small>LIVE</small>
+          </div>
+          <span class="orbit-dot d1"></span>
+          <span class="orbit-dot d2"></span>
+          <span class="orbit-dot d3"></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="dashboard hidden">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">Resultado da análise</div>
+          <h2 id="resultTitle">Visão geral</h2>
+          <p id="resultSubtitle">Dados públicos da região selecionada.</p>
+        </div>
+
+        <div class="section-actions">
+          <button class="secondary" id="refreshBtn" type="button">↻ Atualizar</button>
+          <button class="secondary" id="exportBtn" type="button">⇩ Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid reveal">
+        <article class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-icon">⌖</span>
+            <small>Negócios encontrados</small>
+          </div>
+          <strong id="kpiBusinesses">0</strong>
+          <span id="kpiBusinessesHint">na área pesquisada</span>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-icon">◔</span>
+            <small>Score médio</small>
+          </div>
+          <strong id="kpiScore">0</strong>
+          <span id="kpiScoreHint">de 100 pontos</span>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-icon">◎</span>
+            <small>Com site informado</small>
+          </div>
+          <strong id="kpiWebsite">0%</strong>
+          <span>presença web pública</span>
+        </article>
+
+        <article class="kpi-card accent">
+          <div class="kpi-top">
+            <span class="kpi-icon">↗</span>
+            <small>Alta oportunidade</small>
+          </div>
+          <strong id="kpiOpportunity">0</strong>
+          <span>score abaixo de 45</span>
+        </article>
+      </div>
+
+      <div class="analytics-grid">
+        <article class="panel reveal">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">Distribuição</span>
+              <h3>Qualidade do marketing</h3>
+            </div>
+          </div>
+
+          <div class="donut-layout">
+            <div class="donut" id="donut">
+              <div class="donut-center">
+                <strong id="donutScore">0</strong>
+                <small>Média</small>
+              </div>
+            </div>
+
+            <div class="legend" id="scoreLegend"></div>
+          </div>
+        </article>
+
+        <article class="panel reveal">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">Presença digital</span>
+              <h3>Indicadores da região</h3>
+            </div>
+          </div>
+
+          <div class="metric-bars" id="metricBars"></div>
+        </article>
+
+        <article class="panel reveal">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">Categorias</span>
+              <h3>Composição do mercado</h3>
+            </div>
+          </div>
+
+          <div id="categoryChart" class="category-chart"></div>
+        </article>
+      </div>
+
+      <div class="workspace-grid">
+        <article class="panel map-panel reveal">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">Mapa</span>
+              <h3 id="mapTitle">Negócios locais</h3>
+            </div>
+            <div class="map-legend">
+              <span><i class="good"></i> Forte</span>
+              <span><i class="mid"></i> Médio</span>
+              <span><i class="low"></i> Oportunidade</span>
+            </div>
+          </div>
+          <div id="map"></div>
+        </article>
+
+        <article class="panel insight-panel reveal">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">Insights</span>
+              <h3>O que mais chama atenção</h3>
+            </div>
+          </div>
+          <div id="insightsList" class="insights-list"></div>
+        </article>
+      </div>
+
+      <article class="panel table-panel reveal">
+        <div class="panel-head table-head">
+          <div>
+            <span class="panel-kicker">Ranking</span>
+            <h3>Negócios encontrados</h3>
+          </div>
+
+          <div class="table-tools">
+            <div class="mini-search">
+              <span>⌕</span>
+              <input id="businessSearch" placeholder="Filtrar negócios..." />
+            </div>
+
+            <select id="sortBy" class="mini-select">
+              <option value="scoreAsc">Maior oportunidade</option>
+              <option value="scoreDesc">Melhor score</option>
+              <option value="name">Nome A–Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Negócio</th>
+                <th>Categoria</th>
+                <th>Presença</th>
+                <th>Site</th>
+                <th>Social</th>
+                <th>Score</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="businessTable"></tbody>
+          </table>
+        </div>
+
+        <div id="emptyTable" class="empty-state hidden">
+          Nenhum negócio corresponde ao filtro atual.
+        </div>
+      </article>
+
+      <section class="compare-section reveal">
+        <div class="section-head slim">
+          <div>
+            <div class="eyebrow">Comparação</div>
+            <h2>Compare até 4 negócios</h2>
+          </div>
+          <button class="secondary" id="clearCompareBtn" type="button">Limpar</button>
+        </div>
+
+        <div id="compareTray" class="compare-tray">
+          <div class="compare-empty">Use o botão “Comparar” na tabela.</div>
+        </div>
+      </section>
+    </section>
+
+    <section class="methodology reveal">
+      <div>
+        <div class="eyebrow">Metodologia transparente</div>
+        <h2>O score usa somente sinais observáveis.</h2>
+      </div>
+
+      <div class="method-grid">
+        <article>
+          <strong>35%</strong>
+          <h4>Presença pública</h4>
+          <p>Website, telefone, horários e canais de contato disponíveis nos dados públicos.</p>
+        </article>
+        <article>
+          <strong>25%</strong>
+          <h4>Presença social</h4>
+          <p>Links sociais informados no OpenStreetMap ou em campos públicos do estabelecimento.</p>
+        </article>
+        <article>
+          <strong>25%</strong>
+          <h4>Site</h4>
+          <p>Existência de website e, quando solicitado, análise técnica opcional pelo PageSpeed.</p>
+        </article>
+        <article>
+          <strong>15%</strong>
+          <h4>Completude</h4>
+          <p>Quanto do perfil público do negócio está preenchido e útil para clientes.</p>
+        </article>
+      </div>
+
+      <div class="notice">
+        <strong>Importante:</strong>
+        o MarketMap não inventa avaliações, renda de bairro ou qualidade visual.
+        Campos sem fonte confiável ficam como N/D. Serviços públicos externos podem aplicar limites de uso justo.
+      </div>
+    </section>
+  </main>
+
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-backdrop" data-close-drawer></div>
+    <div class="drawer-panel">
+      <button class="drawer-close" data-close-drawer aria-label="Fechar">×</button>
+      <div id="drawerContent"></div>
+    </div>
+  </aside>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="./app.js"></script>
+</body>
+</html>

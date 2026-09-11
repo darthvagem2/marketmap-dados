@@ -1,99 +1,79 @@
-# MarketMap Global
+# MarketMap Dados — Versão Final Gratuita
 
-Dashboard web para pesquisar negócios locais e analisar oportunidades de marketing em bairros/regiões.
+Aplicação web estática para GitHub Pages que pesquisa negócios locais reais e gera um diagnóstico de presença digital usando dados públicos.
 
-## O que já funciona
+## O que funciona sem API paga
 
-- Seleção de país, cidade, bairro/região e perfil socioeconômico.
-- Modo demonstração com todas as métricas.
-- Modo real usando Nominatim + OpenStreetMap + Overpass API.
-- Mapa interativo com Leaflet.
-- Score de marketing.
-- Filtros e ordenação.
-- Ranking e comparação de até 4 negócios.
+- País, cidade, bairro/região e raio.
+- Geocodificação com Nominatim.
+- Negócios reais com OpenStreetMap/Overpass.
+- Categorias.
+- Website quando informado.
+- Telefone quando informado.
+- Horários quando informados.
+- Redes sociais quando informadas nos dados públicos.
+- Marketing Score transparente.
+- Ranking de oportunidades.
+- Dashboard com estatísticas.
+- Gráficos sem biblioteca paga.
+- Mapa.
+- Comparação de até 4 negócios.
 - Recomendações automáticas.
 - Exportação CSV.
-- Layout responsivo/mobile.
+- Cache local de 24h.
+- Dark/light mode.
+- PWA e Service Worker.
+- Layout responsivo para iPhone e desktop.
 
-## Como abrir
+## Importante sobre “uso ilimitado”
 
-Você pode abrir `index.html` diretamente ou servir a pasta com um servidor local:
+O MarketMap não possui limites próprios, cobranças ou API paga.
 
-```bash
-python -m http.server 8000
+Entretanto, Nominatim, Overpass e os tiles do OpenStreetMap são serviços públicos externos e possuem políticas de uso justo. Portanto, nenhum aplicativo que dependa desses servidores públicos pode prometer tráfego realmente ilimitado.
+
+O app usa cache local e múltiplos endpoints Overpass para reduzir requisições e melhorar disponibilidade.
+
+## Estrutura
+
+```text
+marketmap-dados/
+├── index.html
+├── style.css
+├── app.js
+├── manifest.webmanifest
+├── sw.js
+├── README.md
+└── assets/
+    └── icon.svg
 ```
 
-Depois abra `http://localhost:8000`.
+## Publicar no GitHub Pages
 
-> Para a busca real, é melhor usar um servidor local ou hospedar no GitHub Pages, pois alguns navegadores restringem requisições quando o HTML é aberto diretamente via `file://`.
+1. Substitua os arquivos do repositório pelos arquivos deste pacote.
+2. Em GitHub > Settings > Pages:
+   - Source: Deploy from a branch
+   - Branch: main
+   - Folder: / (root)
+3. Abra:
+   https://darthvagem2.github.io/marketmap-dados/
 
-## Publicação gratuita no GitHub Pages
+## Fontes
 
-1. Crie um repositório.
-2. Envie `index.html`, `style.css` e `app.js` para a raiz.
-3. Em **Settings > Pages**, escolha **Deploy from a branch**.
-4. Selecione a branch `main` e pasta `/ (root)`.
-5. Salve.
+- OpenStreetMap
+- Nominatim
+- Overpass API
 
-## Fontes de dados
+## Privacidade
 
-### Busca real incluída
-- Nominatim / OpenStreetMap: geocodificação.
-- Overpass API: estabelecimentos e tags públicas.
-- Leaflet + OpenStreetMap: mapa.
+As pesquisas são feitas diretamente do navegador para os serviços públicos utilizados. O MarketMap não exige cadastro e não envia os dados para um servidor próprio.
 
-### Limitações importantes
-OpenStreetMap normalmente não fornece:
-- nota e volume de avaliações;
-- tráfego/anúncios pagos;
-- consistência visual da marca;
-- qualidade editorial das redes sociais.
+## Limitações de dados
 
-Por isso, no modo real esses campos aparecem como **N/D** quando não há fonte confiável. O site não inventa dados.
+O app não inventa:
+- avaliações do Google;
+- renda de bairro;
+- classe socioeconômica;
+- qualidade visual de marca;
+- campanhas pagas.
 
-## Como deixar a análise completa
-
-Para produção, conecte um backend/coletor que enriqueça os negócios com fontes permitidas/licenciadas:
-
-- Google Places API ou outra fonte de avaliações;
-- PageSpeed Insights API para qualidade técnica do site;
-- coleta permitida de links sociais publicados no site/ficha;
-- análise visual de logo, cores e consistência;
-- dados oficiais de renda/censo por país para validar a faixa socioeconômica dos bairros.
-
-A recomendação é fazer esse enriquecimento em Python/Node no backend e entregar ao frontend um JSON padronizado.
-
-## Estrutura esperada do JSON enriquecido
-
-```json
-{
-  "id": "business-123",
-  "name": "Exemplo",
-  "category": "Alimentação",
-  "country": "Brasil",
-  "city": "São Paulo",
-  "neighborhood": "Capão Redondo",
-  "lat": -23.65,
-  "lng": -46.76,
-  "website": true,
-  "social": 72,
-  "reviews": 4.6,
-  "reviewCount": 215,
-  "brand": 65,
-  "promotions": 48,
-  "online": 81,
-  "score": 68
-}
-```
-
-## Score
-
-A metodologia visual do dashboard usa:
-- Presença online: 25%
-- Redes sociais: 20%
-- Site próprio: 20%
-- Avaliações: 15%
-- Consistência visual: 10%
-- Promoções/anúncios: 10%
-
-No modo real OSM, o score é recalculado apenas com dimensões disponíveis e normalizado, para não penalizar um negócio por dados que a fonte não fornece.
+Esses campos exigem fontes específicas e/ou APIs licenciadas.
