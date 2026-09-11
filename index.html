@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="MarketMap Global — pesquisa e análise do marketing digital de negócios locais." />
+  <title>MarketMap Global — Inteligência de Marketing Local</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <strong>MarketMap</strong>
+          <span>Global Intelligence</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-section="overview">⌂ <span>Visão geral</span></button>
+        <button class="nav-item" data-section="search">⌕ <span>Pesquisa</span></button>
+        <button class="nav-item" data-section="compare">⇄ <span>Comparar</span><b id="compareCount">0</b></button>
+        <button class="nav-item" data-section="methodology">◎ <span>Metodologia</span></button>
+      </nav>
+
+      <div class="side-card">
+        <span class="eyebrow">Cobertura</span>
+        <strong>Pesquisa internacional</strong>
+        <p>Funciona com busca real no OpenStreetMap/Overpass e modo demonstrativo enriquecido.</p>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span id="dataStatus">Modo demonstração</span>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <button class="mobile-menu" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div>
+          <p class="eyebrow">MARKET INTELLIGENCE</p>
+          <h1>Descubra onde o marketing local está deixando dinheiro na mesa.</h1>
+        </div>
+        <div class="top-actions">
+          <button class="ghost" id="exportBtn">Exportar CSV</button>
+          <button class="primary" id="newSearchBtn">Nova pesquisa</button>
+        </div>
+      </header>
+
+      <section class="search-panel" id="searchPanel">
+        <div class="mode-row">
+          <div>
+            <span class="eyebrow">Fonte de dados</span>
+            <div class="segmented" role="group" aria-label="Modo de dados">
+              <button class="segment active" data-mode="demo">Demonstração</button>
+              <button class="segment" data-mode="live">Busca real OSM</button>
+            </div>
+          </div>
+          <div class="source-note" id="sourceNote">
+            Dados simulados para demonstrar todas as métricas, inclusive avaliações e promoções.
+          </div>
+        </div>
+
+        <div class="search-grid">
+          <label>
+            <span>País</span>
+            <select id="country">
+              <option value="Brasil">Brasil</option>
+              <option value="Portugal">Portugal</option>
+              <option value="México">México</option>
+              <option value="Colômbia">Colômbia</option>
+              <option value="Estados Unidos">Estados Unidos</option>
+              <option value="Espanha">Espanha</option>
+            </select>
+          </label>
+          <label>
+            <span>Cidade</span>
+            <input id="city" value="São Paulo" placeholder="Ex.: São Paulo" />
+          </label>
+          <label>
+            <span>Bairro / região</span>
+            <input id="neighborhood" value="Capão Redondo" placeholder="Ex.: Capão Redondo" />
+          </label>
+          <label>
+            <span>Perfil socioeconômico</span>
+            <select id="economic">
+              <option value="baixa">Classe baixa</option>
+              <option value="media-baixa" selected>Média-baixa</option>
+              <option value="media">Classe média</option>
+              <option value="todos">Baixa → média</option>
+            </select>
+          </label>
+          <label>
+            <span>Categoria</span>
+            <select id="category">
+              <option value="all">Todas as categorias</option>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Beleza">Beleza</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Varejo">Varejo</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Educação">Educação</option>
+            </select>
+          </label>
+          <label>
+            <span>Score máximo</span>
+            <select id="maxScore">
+              <option value="100">Qualquer score</option>
+              <option value="70">Até 70</option>
+              <option value="50">Até 50 — oportunidades</option>
+              <option value="35">Até 35 — alta oportunidade</option>
+            </select>
+          </label>
+          <button class="primary search-btn" id="searchBtn"><span>⌕</span> Pesquisar região</button>
+        </div>
+
+        <p class="disclaimer" id="socioDisclaimer">
+          A classificação socioeconômica deve ser validada com dados oficiais de censo/renda de cada país. No modo real, o bairro é pesquisado no mapa, mas sua classe econômica não é inferida automaticamente.
+        </p>
+      </section>
+
+      <section class="metrics-grid" id="metricsGrid">
+        <article class="metric-card">
+          <div class="metric-icon">◉</div>
+          <div><span>Negócios encontrados</span><strong id="mBusinesses">—</strong><small id="mBusinessDelta">na região pesquisada</small></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-icon">↗</div>
+          <div><span>Score médio</span><strong id="mScore">—</strong><small>de 100 pontos</small></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-icon">⌘</div>
+          <div><span>Sem site próprio</span><strong id="mNoSite">—</strong><small>oportunidade digital</small></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-icon">✦</div>
+          <div><span>Alta oportunidade</span><strong id="mOpportunity">—</strong><small>score abaixo de 45</small></div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card map-card">
+          <div class="card-head">
+            <div><span class="eyebrow">MAPA</span><h2>Negócios da região</h2></div>
+            <span class="pill" id="mapLabel">Capão Redondo · São Paulo</span>
+          </div>
+          <div id="map"></div>
+          <div class="map-legend">
+            <span><i class="dot bad"></i> 0–44</span>
+            <span><i class="dot mid"></i> 45–69</span>
+            <span><i class="dot good"></i> 70–100</span>
+          </div>
+        </article>
+
+        <article class="card opportunity-card">
+          <div class="card-head">
+            <div><span class="eyebrow">OPORTUNIDADES</span><h2>Onde melhorar primeiro</h2></div>
+          </div>
+          <div id="opportunityList" class="opportunity-list"></div>
+        </article>
+      </section>
+
+      <section class="card results-card">
+        <div class="card-head results-head">
+          <div>
+            <span class="eyebrow">RANKING LOCAL</span>
+            <h2>Comparação entre negócios</h2>
+          </div>
+          <div class="results-tools">
+            <input id="businessSearch" placeholder="Buscar negócio..." />
+            <select id="sortBy">
+              <option value="score-asc">Maior oportunidade</option>
+              <option value="score-desc">Melhor marketing</option>
+              <option value="reviews-desc">Mais avaliações</option>
+              <option value="name-asc">Nome A–Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Negócio</th>
+                <th>Categoria</th>
+                <th>Score</th>
+                <th>Site</th>
+                <th>Social</th>
+                <th>Avaliações</th>
+                <th>Marca</th>
+                <th>Promoções</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty hidden">
+          <strong>Nenhum negócio encontrado.</strong>
+          <span>Tente remover filtros ou pesquisar outra região.</span>
+        </div>
+      </section>
+
+      <section class="card compare-card" id="compareSection">
+        <div class="card-head">
+          <div><span class="eyebrow">COMPARAÇÃO</span><h2>Negócios selecionados</h2></div>
+          <button class="ghost" id="clearCompare">Limpar seleção</button>
+        </div>
+        <div id="compareGrid" class="compare-grid">
+          <div class="compare-empty">Selecione até 4 negócios na tabela para comparar lado a lado.</div>
+        </div>
+      </section>
+
+      <section class="card methodology" id="methodologySection">
+        <div class="card-head">
+          <div><span class="eyebrow">METODOLOGIA</span><h2>Como o MarketMap calcula o score</h2></div>
+        </div>
+        <div class="method-grid">
+          <div><b>25%</b><strong>Presença online</strong><span>Website, telefone, horários e completude da ficha.</span></div>
+          <div><b>20%</b><strong>Redes sociais</strong><span>Presença de Instagram, Facebook ou outras redes.</span></div>
+          <div><b>20%</b><strong>Site próprio</strong><span>Existência e, quando conectada, qualidade técnica do site.</span></div>
+          <div><b>15%</b><strong>Avaliações</strong><span>Volume e nota média quando uma fonte licenciada estiver conectada.</span></div>
+          <div><b>10%</b><strong>Consistência visual</strong><span>Padronização de identidade — requer análise visual ou dataset enriquecido.</span></div>
+          <div><b>10%</b><strong>Promoções/anúncios</strong><span>Sinais públicos de campanhas ou ofertas visíveis.</span></div>
+        </div>
+        <div class="method-note">
+          <strong>Importante:</strong> OpenStreetMap não fornece avaliações, tráfego pago ou uma auditoria visual da marca. No modo real, métricas sem fonte confiável aparecem como “N/D” e não são inventadas.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-overlay hidden" id="drawerOverlay"></div>
+  <aside class="detail-drawer" id="detailDrawer" aria-hidden="true">
+    <button class="drawer-close" id="closeDrawer">×</button>
+    <div id="drawerContent"></div>
+  </aside>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="./app.js"></script>
+</body>
+</html>
